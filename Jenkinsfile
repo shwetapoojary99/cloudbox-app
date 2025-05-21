@@ -3,6 +3,7 @@ pipeline {
     environment {
         AWS_REGION = 'us-east-1'
         ECR_REPO = '358530560663.dkr.ecr.us-east-1.amazonaws.com/cloudbox-repo'
+        CONTAINER_NAME = 'cloudbox-container'
     }
     stages {
         stage('Clone Repo') {
@@ -26,6 +27,23 @@ pipeline {
                     docker tag cloudbox-repo:latest $ECR_REPO:latest
                     docker push $ECR_REPO:latest
                 """
+            }
+        }
+        stage('Deploy on EC2 with Docker Compose') {
+            steps {
+                sh '''
+                echo "version: '3'
+                services:
+                  cloudbox:
+                    image: $ECR_REPO:latest
+                    ports:
+                      - '80:80'
+                    restart: always" > docker-compose.yml
+
+                docker compose down || true
+                docker compose pull
+                docker compose up -d
+                '''
             }
         }
     }
