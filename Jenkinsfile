@@ -1,9 +1,12 @@
 pipeline {
     agent any
+    environment {
+        ECR_REPO = '358530560663.dkr.ecr.us-east-1.amazonaws.com/cloudbox-repo'
+    }
     stages {
         stage('Clone Repo') {
             steps {
-                git 'https://github.com/shwetapoojary99/cloudbox-app.git'
+                git branch: 'main', url: 'https://github.com/shwetapoojary99/cloudbox-app.git'
             }
         }
         stage('Build Docker Image') {
@@ -13,15 +16,10 @@ pipeline {
         }
         stage('Tag & Push to ECR') {
             steps {
-                script {
-                    def imageTag = 'latest'
-                    def repoUri = '358530560663.dkr.ecr.us-east-1.amazonaws.com/cloudbox-repo'
-                    sh """
-                        aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${repoUri}
-                        docker tag cloudbox-repo:latest ${repoUri}:${imageTag}
-                        docker push ${repoUri}:${imageTag}
-                    """
-                }
+                sh """
+                docker tag cloudbox-repo:latest $ECR_REPO:latest
+                docker push $ECR_REPO:latest
+                """
             }
         }
     }
