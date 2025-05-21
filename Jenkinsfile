@@ -30,8 +30,8 @@ pipeline {
         stage('Tag & Push to ECR') {
             steps {
                 sh '''
-                docker tag ${IMAGE_NAME}:latest ${ECR_URL}:latest
-                docker push ${ECR_URL}:latest
+                    docker tag ${IMAGE_NAME}:latest ${ECR_URL}:latest
+                    docker push ${ECR_URL}:latest
                 '''
             }
         }
@@ -39,10 +39,21 @@ pipeline {
         stage('Deploy on EC2 with Docker Compose') {
             steps {
                 sh '''
-                cat <<EOF > docker-compose.yml
-                version: '3'
-                services:
-                  cloudbox:
-                    image: ${ECR_URL}:latest
-                    ports:
-                      - "80:
+                    cat <<EOF > docker-compose.yml
+version: '3'
+services:
+  cloudbox:
+    image: ${ECR_URL}:latest
+    ports:
+      - "80:80"
+    restart: always
+EOF
+
+                    docker compose down || true
+                    docker compose pull
+                    docker compose up -d
+                '''
+            }
+        }
+    }
+}
